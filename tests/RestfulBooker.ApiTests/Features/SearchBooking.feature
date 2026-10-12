@@ -6,6 +6,7 @@ Feature: Search bookings
     Given an existing booking
     When I search bookings by the guest's first and last name
     Then the response status code should be 200
+    And the response time should be within the agreed limit
     And the search results should include the booking
 
   @regression

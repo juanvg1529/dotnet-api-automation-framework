@@ -1,5 +1,6 @@
 using System.Text;
 using Allure.Net.Commons;
+using Microsoft.Extensions.Configuration;
 using RestfulBooker.Api.Clients;
 using RestfulBooker.Api.Configuration;
 using RestfulBooker.ApiTests.Support;
@@ -11,12 +12,15 @@ namespace RestfulBooker.ApiTests.Hooks;
 public sealed class ApiHooks(IObjectContainer container, ScenarioData data)
 {
     private static ApiSettings _settings = null!;
+    private static QualitySettings _quality = null!;
     private static ApiClient _api = null!;
 
     [BeforeTestRun]
     public static void CreateSharedClient()
     {
-        _settings = ApiSettings.Load(AppContext.BaseDirectory);
+        var configuration = ApiSettings.BuildConfiguration(AppContext.BaseDirectory);
+        _settings = ApiSettings.Load(configuration);
+        _quality = configuration.GetSection("Quality").Get<QualitySettings>() ?? new QualitySettings();
         _api = new ApiClient(_settings);
     }
 
@@ -31,6 +35,7 @@ public sealed class ApiHooks(IObjectContainer container, ScenarioData data)
     public void RegisterDependencies()
     {
         container.RegisterInstanceAs(_settings);
+        container.RegisterInstanceAs(_quality);
         container.RegisterInstanceAs(_api, dispose: false);
     }
 
@@ -40,7 +45,8 @@ public sealed class ApiHooks(IObjectContainer container, ScenarioData data)
         if (data.LastResponse is not { } response) return;
 
         var summary = $"{response.Request.Method} {response.ResponseUri}\n" +
-                      $"Status: {(int)response.StatusCode} {response.StatusCode}\n\n{response.Content}";
+                      $"Status: {(int)response.StatusCode} {response.StatusCode}\n" +
+                      $"Time: {data.LastResponseTime?.TotalMilliseconds:F0} ms\n\n{response.Content}";
         AllureApi.AddAttachment("Last response", "text/plain", Encoding.UTF8.GetBytes(summary), ".txt");
     }
 

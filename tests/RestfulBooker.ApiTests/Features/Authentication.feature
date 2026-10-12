@@ -5,6 +5,7 @@ Feature: Authentication
   Scenario: Valid credentials return a token
     When I request a token with valid credentials
     Then the response status code should be 200
+    And the response time should be within the agreed limit
     And the response should contain a token
 
   @negative @known-defect

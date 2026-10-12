@@ -10,6 +10,7 @@ Feature: Delete booking
     When I delete the booking
     # Expected: 204 No Content (or 200). Actual: 201 Created.
     Then the response status code should be 201
+    And the response time should be within the agreed limit
     And the booking should no longer exist
 
   @negative

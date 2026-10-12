@@ -42,13 +42,12 @@ public sealed class BookingSteps(BookingClient bookings, ScenarioData data)
     // ---------- When ----------
 
     [When("I ping the API")]
-    public async Task WhenIPingTheApi() => data.LastResponse = await bookings.PingAsync();
+    public async Task WhenIPingTheApi() => await data.SendAsync(() => bookings.PingAsync());
 
     [When("I create the booking")]
     public async Task WhenICreateTheBooking()
     {
-        var response = await bookings.CreateBookingAsync(data.Payload!);
-        data.LastResponse = response;
+        var response = await data.SendAsync(() => bookings.CreateBookingAsync(data.Payload!));
 
         if (response.IsSuccessful && response.Data is { BookingId: > 0 } created)
         {
@@ -61,7 +60,7 @@ public sealed class BookingSteps(BookingClient bookings, ScenarioData data)
     public async Task WhenIReplaceTheBookingWithNewValidData()
     {
         var replacement = BookingBuilder.AValidBooking().Build();
-        data.LastResponse = await bookings.UpdateBookingAsync(data.RequiredBookingId, replacement, data.Token);
+        await data.SendAsync(() => bookings.UpdateBookingAsync(data.RequiredBookingId, replacement, data.Token));
         data.ExpectedBooking = replacement;
     }
 
@@ -69,21 +68,21 @@ public sealed class BookingSteps(BookingClient bookings, ScenarioData data)
     public async Task WhenIChangeTheFirstNameAndTotalPrice(string firstName, int totalPrice)
     {
         var changes = new { firstname = firstName, totalprice = totalPrice };
-        data.LastResponse = await bookings.PartialUpdateBookingAsync(data.RequiredBookingId, changes, data.Token);
+        await data.SendAsync(() => bookings.PartialUpdateBookingAsync(data.RequiredBookingId, changes, data.Token));
         data.ExpectedBooking = data.ExpectedBooking! with { FirstName = firstName, TotalPrice = totalPrice };
     }
 
     [When("I delete the booking")]
     public async Task WhenIDeleteTheBooking() =>
-        data.LastResponse = await bookings.DeleteBookingAsync(data.RequiredBookingId, data.Token);
+        await data.SendAsync(() => bookings.DeleteBookingAsync(data.RequiredBookingId, data.Token));
 
     [When("I search bookings by the guest's first and last name")]
     public async Task WhenISearchBookingsByGuestName() =>
-        data.LastResponse = await bookings.GetBookingIdsAsync(data.ExpectedBooking!.FirstName, data.ExpectedBooking.LastName);
+        await data.SendAsync(() => bookings.GetBookingIdsAsync(data.ExpectedBooking!.FirstName, data.ExpectedBooking.LastName));
 
     [When("I search bookings for a guest that does not exist")]
     public async Task WhenISearchBookingsForAGuestThatDoesNotExist() =>
-        data.LastResponse = await bookings.GetBookingIdsAsync($"nobody-{Guid.NewGuid():N}", $"none-{Guid.NewGuid():N}");
+        await data.SendAsync(() => bookings.GetBookingIdsAsync($"nobody-{Guid.NewGuid():N}", $"none-{Guid.NewGuid():N}"));
 
     // ---------- Then ----------
 

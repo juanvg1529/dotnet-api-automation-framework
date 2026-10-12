@@ -8,6 +8,7 @@ Feature: Create booking
     Given a valid booking
     When I create the booking
     Then the response status code should be 200
+    And the response time should be within the agreed limit
     And the response should match the "created-booking" schema
     And the created booking should match the request
     And the booking can be retrieved with the same data

@@ -17,11 +17,11 @@ public sealed class AuthSteps(AuthClient auth, ApiSettings settings, ScenarioDat
 
     [When("I request a token with valid credentials")]
     public async Task WhenIRequestATokenWithValidCredentials() =>
-        data.LastResponse = await auth.CreateTokenAsync(settings.Username, settings.Password);
+        await data.SendAsync(() => auth.CreateTokenAsync(settings.Username, settings.Password));
 
     [When("I request a token with username {string} and password {string}")]
     public async Task WhenIRequestATokenWith(string username, string password) =>
-        data.LastResponse = await auth.CreateTokenAsync(username, password);
+        await data.SendAsync(() => auth.CreateTokenAsync(username, password));
 
     [Then("the response should contain a token")]
     public void ThenTheResponseShouldContainAToken()

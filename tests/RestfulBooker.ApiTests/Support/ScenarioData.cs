@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using RestfulBooker.Api.Models;
 using RestSharp;
@@ -19,6 +20,7 @@ public sealed class ScenarioData
     public int? BookingId { get; set; }
     public string? Token { get; set; }
     public RestResponse? LastResponse { get; set; }
+    public TimeSpan? LastResponseTime { get; set; }
 
     /// <summary>Bookings created by the scenario, deleted in the AfterScenario hook.</summary>
     public List<int> CreatedBookingIds { get; } = [];
@@ -28,6 +30,25 @@ public sealed class ScenarioData
 
     public int RequiredBookingId =>
         BookingId ?? throw new InvalidOperationException("No booking has been created in this scenario yet.");
+
+    /// <summary>Sends a request, keeping its response and how long it took.</summary>
+    public async Task<RestResponse> SendAsync(Func<Task<RestResponse>> request)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var response = await request();
+        LastResponseTime = stopwatch.Elapsed;
+        LastResponse = response;
+        return response;
+    }
+
+    public async Task<RestResponse<T>> SendAsync<T>(Func<Task<RestResponse<T>>> request)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var response = await request();
+        LastResponseTime = stopwatch.Elapsed;
+        LastResponse = response;
+        return response;
+    }
 
     public T ResponseAs<T>() =>
         JsonSerializer.Deserialize<T>(Response.Content ?? string.Empty)

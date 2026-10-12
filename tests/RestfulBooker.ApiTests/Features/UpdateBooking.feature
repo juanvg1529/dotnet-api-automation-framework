@@ -9,6 +9,7 @@ Feature: Update booking
     Given I am authenticated
     When I replace the booking with new valid data
     Then the response status code should be 200
+    And the response time should be within the agreed limit
     And the response should match the "booking" schema
     And the response should contain the expected booking
     And the booking can be retrieved with the same data
@@ -18,6 +19,7 @@ Feature: Update booking
     Given I am authenticated
     When I change the first name to "Juan Diego" and the total price to 1250
     Then the response status code should be 200
+    And the response time should be within the agreed limit
     And the booking can be retrieved with the same data
 
   @negative

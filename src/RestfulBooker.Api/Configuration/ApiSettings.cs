@@ -14,18 +14,19 @@ public sealed class ApiSettings
     public string Username { get; init; } = string.Empty;
     public string Password { get; init; } = string.Empty;
 
-    public static ApiSettings Load(string basePath)
+    public static IConfiguration BuildConfiguration(string basePath)
     {
         var environment = Environment.GetEnvironmentVariable("TEST_ENV") ?? "default";
 
-        var configuration = new ConfigurationBuilder()
+        return new ConfigurationBuilder()
             .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
             .AddEnvironmentVariables(prefix: "RB_")
             .Build();
-
-        return configuration.GetSection("Api").Get<ApiSettings>()
-               ?? throw new InvalidOperationException("Missing 'Api' section in configuration.");
     }
+
+    public static ApiSettings Load(IConfiguration configuration) =>
+        configuration.GetSection("Api").Get<ApiSettings>()
+        ?? throw new InvalidOperationException("Missing 'Api' section in configuration.");
 }
