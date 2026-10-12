@@ -128,4 +128,4 @@ open allure-report/index.html
 
 ---
 
-Built by **Juan Diego Vera Godoy**, QA Automation Engineer / SDET · [LinkedIn](https://www.linkedin.com/in/juan-diego-vera-godoy-3949a6183)
+Built by **Juan Diego Vera Godoy**, QA Automation Engineer / SDET · [LinkedIn](https://www.linkedin.com/in/juan-diego-vera-godoy-3949a6183) · See also: [FHIR R4 API Automation](https://github.com/juanvg1529/fhir-api-automation) (healthcare interoperability testing)
