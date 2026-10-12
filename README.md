@@ -7,7 +7,7 @@
 
 A BDD API test automation framework in **C# / .NET 10** for the public [Restful-Booker](https://restful-booker.herokuapp.com/apidoc/index.html) hotel booking API. It shows how I structure API automation in real projects: a reusable client layer, readable Gherkin scenarios, isolated test data, schema validation, parallel runs, CI and a published report.
 
-**→ [Latest Allure report](https://juanvg1529.github.io/dotnet-api-automation-framework/)**
+**→ [Latest Allure report](https://juanvg1529.github.io/dotnet-api-automation-framework/)** · **[Test plan](docs/test-plan.md)** · **[Traceability matrix](docs/traceability-matrix.md)** · **[Bug reports](docs/bug-reports)**
 
 ## Stack
 
@@ -34,6 +34,7 @@ A BDD API test automation framework in **C# / .NET 10** for the public [Restful-
 | Update booking | Full (PUT) and partial (PATCH) updates persist; missing or invalid token → 403 |
 | Delete booking | Deleted booking returns 404 afterwards; deleting without a token is forbidden and leaves the booking intact |
 | Search bookings | Filtering by guest name finds the booking; unknown guest returns an empty list |
+| Response time | Main operations answer within the agreed limit (3,000 ms by default, configurable per environment) |
 
 Tags let each pipeline choose its scope: `@smoke` (fast gate on every PR), `@regression`, `@negative`, `@known-defect`.
 
@@ -49,8 +50,13 @@ tests/RestfulBooker.ApiTests/
 ├── Features/                       Gherkin scenarios: the living documentation
 ├── StepDefinitions/                thin glue: call a client, assert on the response
 ├── Hooks/                          shared client setup, DI registration, cleanup, report attachments
-├── Support/                        BookingBuilder (Bogus), SchemaValidator, AuthTokenCache, ScenarioData
+├── Support/                        BookingBuilder (Bogus), SchemaValidator, AuthTokenCache, ScenarioData, QualitySettings
 └── Schemas/                        JSON Schemas for response contracts
+
+docs/                               ← QA documentation
+├── test-plan.md                    scope, ISO/IEC 25010 quality characteristics, approach, entry/exit criteria, risks
+├── traceability-matrix.md          requirement → scenario → defect
+└── bug-reports/                    one report per defect, with curl steps to reproduce
 ```
 
 ```
@@ -67,16 +73,17 @@ Feature file ──► Step definitions ──► BookingClient / AuthClient ─
 - **The token is requested once per run.** `AuthTokenCache` shares it across parallel scenarios (thread-safe), instead of calling `POST /auth` before every write.
 - **Contract and data checks are separate.** JSON Schema validates the *shape* of a response; record equality validates the *values* match what was sent, both in the response and after reading it back with `GET`.
 - **Known defects are documented, not hidden.** Restful-Booker has real bugs (see below). Instead of skipping those cases, `@known-defect` scenarios assert today's behaviour and explain the expected one in a comment. If the API gets fixed, they fail on purpose, which is the signal to update them.
+- **Non-functional checks live next to functional ones.** Every request is timed; main scenarios assert the response arrives within a limit from configuration (`Quality:MaxResponseTimeMs`), so CI and a slower staging environment can use different limits without code changes.
 - **Configuration without secrets in code.** `appsettings.json` → `appsettings.{TEST_ENV}.json` → `RB_*` environment variables (used by CI with repository secrets).
 
 ## Defects found in the API
 
-| # | Behaviour | Expected | Actual | Scenario |
+| ID | Behaviour | Expected | Actual | Severity |
 |---|---|---|---|---|
-| 1 | Create booking without `firstname`, `lastname` or `bookingdates` | `400 Bad Request` with a validation message | `500 Internal Server Error` | `CreateBooking.feature` |
-| 2 | Create booking with checkout before checkin | `400 Bad Request` | `200 OK`, impossible stay stored | `CreateBooking.feature` |
-| 3 | Delete an existing booking | `204 No Content` / `200 OK` | `201 Created` | `DeleteBooking.feature` |
-| 4 | Invalid credentials on `POST /auth` | `401 Unauthorized` | `200 OK` with `{"reason":"Bad credentials"}` | `Authentication.feature` |
+| [BUG-001](docs/bug-reports/BUG-001-missing-required-field-returns-500.md) | Create booking without `firstname`, `lastname` or `bookingdates` | `400 Bad Request` with a validation message | `500 Internal Server Error` | Major |
+| [BUG-002](docs/bug-reports/BUG-002-checkout-before-checkin-accepted.md) | Create booking with checkout before checkin | `400 Bad Request` | `200 OK`, impossible stay stored | Major |
+| [BUG-003](docs/bug-reports/BUG-003-delete-returns-201-created.md) | Delete an existing booking | `204 No Content` / `200 OK` | `201 Created` | Minor |
+| [BUG-004](docs/bug-reports/BUG-004-invalid-credentials-return-200.md) | Invalid credentials on `POST /auth` | `401 Unauthorized` | `200 OK` with `{"reason":"Bad credentials"}` | Minor |
 
 ## Running locally
 
@@ -93,6 +100,7 @@ Run against another environment:
 ```bash
 TEST_ENV=staging dotnet test                 # loads appsettings.staging.json
 RB_Api__BaseUrl=http://localhost:3001 dotnet test
+RB_Quality__MaxResponseTimeMs=5000 dotnet test   # looser time limit
 ```
 
 View the Allure report locally (needs Java):
@@ -116,7 +124,6 @@ open allure-report/index.html
 
 - [ ] Allure history between runs (trend charts)
 - [ ] Docker image to run the suite with one command
-- [ ] Response time thresholds per endpoint
 - [ ] Run the suite against a local Restful-Booker container in CI
 
 ---
