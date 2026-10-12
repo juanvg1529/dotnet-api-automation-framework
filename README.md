@@ -1,13 +1,13 @@
 # .NET API Automation Framework
 
-[![API Tests](https://github.com/sktvera/dotnet-api-automation-framework/actions/workflows/api-tests.yml/badge.svg)](https://github.com/sktvera/dotnet-api-automation-framework/actions/workflows/api-tests.yml)
-[![Allure Report](https://img.shields.io/badge/report-Allure-orange)](https://sktvera.github.io/dotnet-api-automation-framework/)
+[![API Tests](https://github.com/juanvg1529/dotnet-api-automation-framework/actions/workflows/api-tests.yml/badge.svg)](https://github.com/juanvg1529/dotnet-api-automation-framework/actions/workflows/api-tests.yml)
+[![Allure Report](https://img.shields.io/badge/report-Allure-orange)](https://juanvg1529.github.io/dotnet-api-automation-framework/)
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![Reqnroll](https://img.shields.io/badge/BDD-Reqnroll-2ea44f)
 
 A BDD API test automation framework in **C# / .NET 10** for the public [Restful-Booker](https://restful-booker.herokuapp.com/apidoc/index.html) hotel booking API. It shows how I structure API automation in real projects: a reusable client layer, readable Gherkin scenarios, isolated test data, schema validation, parallel runs, CI and a published report.
 
-**→ [Latest Allure report](https://sktvera.github.io/dotnet-api-automation-framework/)**
+**→ [Latest Allure report](https://juanvg1529.github.io/dotnet-api-automation-framework/)**
 
 ## Stack
 
