@@ -98,8 +98,11 @@ RB_Api__BaseUrl=http://localhost:3001 dotnet test
 View the Allure report locally (needs Java):
 
 ```bash
-npx allure-commandline serve tests/RestfulBooker.ApiTests/bin/Debug/net10.0/allure-results
+npx allure-commandline generate tests/RestfulBooker.ApiTests/bin/Debug/net10.0/allure-results --clean --single-file -o allure-report
+open allure-report/index.html
 ```
+
+> **Note on flakiness:** Restful-Booker is a shared public sandbox that wipes its data every 10 minutes. A scenario running exactly at reset time can lose its booking and fail. Unique data and short scenarios keep this rare; the next step below (a local container in CI) removes it.
 
 ## CI/CD
 

@@ -9,7 +9,10 @@ public sealed record Booking
     [JsonPropertyName("totalprice")] public int TotalPrice { get; init; }
     [JsonPropertyName("depositpaid")] public bool DepositPaid { get; init; }
     [JsonPropertyName("bookingdates")] public BookingDates BookingDates { get; init; } = new();
-    [JsonPropertyName("additionalneeds")] public string? AdditionalNeeds { get; init; }
+    // Optional field: omitted from the request instead of being sent as null.
+    [JsonPropertyName("additionalneeds")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AdditionalNeeds { get; init; }
 }
 
 public sealed record BookingDates
