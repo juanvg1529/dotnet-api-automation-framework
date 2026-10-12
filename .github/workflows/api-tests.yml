@@ -1,0 +1,108 @@
+name: API Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 11 * * 1-5" # weekdays 06:00 Colombia time: catches API changes even without commits
+  workflow_dispatch:
+    inputs:
+      category:
+        description: "Tag to run (smoke, regression, negative, known-defect). Empty = all"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  RESULTS_DIR: tests/RestfulBooker.ApiTests/bin/Release/net10.0/allure-results
+
+jobs:
+  test:
+    name: Run API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        env:
+          # Credentials can be overridden with repository secrets; the defaults are the public demo ones.
+          RB_Api__Username: ${{ secrets.RB_USERNAME || 'admin' }}
+          RB_Api__Password: ${{ secrets.RB_PASSWORD || 'password123' }}
+          CATEGORY: ${{ inputs.category }}
+        run: |
+          FILTER=""
+          if [ -n "$CATEGORY" ]; then FILTER="--filter Category=$CATEGORY"; fi
+          dotnet test --configuration Release --no-build $FILTER \
+            --logger "trx;LogFileName=results.trx" \
+            --logger "console;verbosity=normal"
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: ${{ env.RESULTS_DIR }}
+          retention-days: 14
+
+      - name: Upload TRX results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trx-results
+          path: "**/TestResults/*.trx"
+          retention-days: 14
+
+  report:
+    name: Publish Allure report
+    needs: test
+    if: always() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Generate report
+        run: npx --yes allure-commandline@2.46.1 generate allure-results --clean -o allure-report
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
